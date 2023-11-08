@@ -1,17 +1,17 @@
-use leptos::*;
 use leptos::html::AnyElement;
+use leptos::*;
 
 mod render;
-use render::{Renderer, RenderContext};
+use render::{RenderContext, Renderer};
 
 pub use render::HtmlError;
 
 use web_sys::MouseEvent;
 
-use pulldown_cmark_wikilink::{ParserOffsetIter, Options, LinkType, Event};
+use pulldown_cmark_wikilink::{Event, LinkType, Options, ParserOffsetIter};
 
-mod utils;
 mod component;
+mod utils;
 
 use core::ops::Range;
 use std::collections::HashMap;
@@ -25,7 +25,7 @@ pub struct LinkDescription {
     /// the html view of the element under the link
     pub content: View,
 
-    /// the title of the link. 
+    /// the title of the link.
     /// If you don't know what it is, don't worry: it is ofter empty
     pub title: String,
 
@@ -43,12 +43,11 @@ pub struct MarkdownMouseEvent {
 
     /// the corresponding range in the markdown source, as a slice of [`u8`][u8]
     pub position: Range<usize>,
-
     // TODO: add a clonable tag for the type of the element
     // pub tag: pulldown_cmark::Tag<'a>,
 }
 
-#[cfg(feature="debug")]
+#[cfg(feature = "debug")]
 pub mod debug {
     use super::*;
     #[derive(Copy, Clone)]
@@ -57,24 +56,26 @@ pub mod debug {
 
 pub struct MdComponentProps {
     pub attributes: Vec<(String, String)>,
-    pub children: View
+    pub children: View,
 }
 
 #[derive(Default)]
-pub struct ComponentMap (HashMap<&'static str, Callback<MdComponentProps, View>>);
+pub struct ComponentMap(HashMap<&'static str, Callback<MdComponentProps, View>>);
 
 impl ComponentMap {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn add<F, I>(mut self, name: &'static str, f: F) -> Self 
-    where F: Fn(MdComponentProps) -> I + 'static,
-          I: IntoView {
-        self.0.insert(name, Callback::new(move |props| f(props).into_view()));
+    pub fn add<F, I>(mut self, name: &'static str, f: F) -> Self
+    where
+        F: Fn(MdComponentProps) -> I + 'static,
+        I: IntoView,
+    {
+        self.0
+            .insert(name, Callback::new(move |props| f(props).into_view()));
         self
     }
 }
-
 
 #[component]
 pub fn Markdown(
@@ -85,16 +86,16 @@ pub fn Markdown(
     /// the callback called when a component is clicked.
     /// if you want to controll what happens when a link is clicked,
     /// use [`render_links`][render_links]
-    #[prop(optional, into)] 
+    #[prop(optional, into)]
     on_click: Option<Callback<MarkdownMouseEvent>>,
 
-    /// 
-    #[prop(optional, into)] 
+    ///
+    #[prop(optional, into)]
     render_links: Option<Callback<LinkDescription, HtmlElement<AnyElement>>>,
 
     /// the name of the theme used for syntax highlighting.
     /// Only the default themes of [syntect::Theme] are supported
-    #[prop(optional)] 
+    #[prop(optional)]
     theme: Option<String>,
 
     /// wether to enable wikilinks support.
@@ -111,31 +112,21 @@ pub fn Markdown(
     #[prop(optional, into)]
     parse_options: Option<pulldown_cmark_wikilink::Options>,
 
-    #[prop(optional, into)]
-    components: ComponentMap,
+    #[prop(optional, into)] components: ComponentMap,
 
-    #[prop(optional, into)]
-    frontmatter: Option<WriteSignal<String>>
-
-    ) -> impl IntoView 
-     {
-    let context = RenderContext::new(
-        theme,
-        on_click,
-        render_links,
-        components,
-        frontmatter
-    );
+    #[prop(optional, into)] frontmatter: Option<WriteSignal<String>>,
+) -> impl IntoView {
+    let context = RenderContext::new(theme, on_click, render_links, components, frontmatter);
 
     let options = parse_options.unwrap_or(Options::all());
 
-    #[cfg(feature="debug")]
+    #[cfg(feature = "debug")]
     let set_debug_info = use_context::<debug::EventInfo>();
 
     view! {
-        <link rel="stylesheet" 
-            href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.css" 
-            integrity="sha384-3UiQGuEI4TTMaFmGIZumfRPtfKQ3trwQE2JgosJxCnGmQpL/lJdjpcHkaaFwHlcI" 
+        <link rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.css"
+            integrity="sha384-3UiQGuEI4TTMaFmGIZumfRPtfKQ3trwQE2JgosJxCnGmQpL/lJdjpcHkaaFwHlcI"
             crossorigin="anonymous"/>
             {move || src.with( |x| {
                 let mut stream: Vec<_> = ParserOffsetIter::new_ext(x, options, wikilinks.get())
@@ -161,4 +152,3 @@ pub fn Markdown(
             }
     }
 }
-
