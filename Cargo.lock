@@ -867,7 +867,7 @@ dependencies = [
 
 [[package]]
 name = "leptos-markdown"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "katex",
  "leptos",
